@@ -109,3 +109,18 @@
   display: flex;
   justify-content: space-between;
 }
+.product-card{
+border: 2px solid black;
+width: min-content;
+padding: auto;
+margin: 10px;
+display: flex;
+flex-direction: column;
+}
+.product-card_favorite{
+  cursor: pointer;
+}
+.product-list{
+  display: flex;
+  flex-wrap: wrap;
+}

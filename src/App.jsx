@@ -1,37 +1,79 @@
 import './App.css';
 import Button from './components/Button.jsx';
 import Modal from './components/Modal.jsx';
-import { useState } from "react"
+import ProductCard from './components/ProductCard.jsx';
+import { useState, useEffect } from "react"
+import useLocalStorage from './components/useLocalStorage.js';
 
 function App() {
-  const [isFirstModalOpen, setIsFirstModalOpen] = useState(false);
-  const [isSecondModalOpen, setIsSecondModalOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [cartItems, setCartItems] = useLocalStorage('cartItems', []);
+  const [favorites, setFavorites] = useLocalStorage('favorites', []);
+
+  useEffect(() => {
+    fetch('/products.json')
+      .then(response => response.json())
+      .then(data => setProducts(data))
+      .catch(error => console.error('Error loading products:', error));
+  }, []);
+
+  useEffect(() => {
+    const savedCartItems = JSON.parse(localStorage.getItem('cartItems'));
+    if (savedCartItems) {
+      setCartItems(savedCartItems);
+    }
+  }, []);
+
+  useEffect(() => {
+    const savedFavorites = JSON.parse(localStorage.getItem('favorites'));
+    if (savedFavorites) {
+      setFavorites(savedFavorites);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const handleAddToCart = (product) => {
+    if (cartItems.includes(product)) {
+      setCartItems(prevCartItems => prevCartItems.filter(id => id !== product));
+    } else {
+      setCartItems(prevCartItems => [...prevCartItems, product]);
+    }
+  };
+
+  const handleToggleFavorite = (productId) => {
+    if (favorites.includes(productId)) {
+      setFavorites(prevFavorites => prevFavorites.filter(id => id !== productId));
+    } else {
+      setFavorites(prevFavorites => [...prevFavorites, productId]);
+    }
+  };
 
   return (
     <div>
-      <Button onClick={() => setIsFirstModalOpen(true)}>Open first modal</Button>
-      <Button onClick={() => setIsSecondModalOpen(true)}>Open second modal</Button>
-
-      {isFirstModalOpen && (
-        <Modal onClose={() => setIsFirstModalOpen(false)}>
-          <div class="block"></div>
-          <h1 class="header">Product Delete!</h1>
-          <p class="description">By clicking the “Yes, Delete” button, PRODUCT NAME will be deleted.</p>
-          <div class="buttons">
-            <button class="button-violet">NO, CANCEL</button>
-            <button class="button">YES, DELETE</button>
-          </div>
-
-        </Modal>
-      )}
-
-      {isSecondModalOpen && (
-        <Modal onClose={() => setIsSecondModalOpen(false)}>
-          <h1 class="header">Add Product “NAME”</h1>
-          <p class="description">Description for you product</p>
-          <button class="button-violet">ADD TO FAVORITE</button>
-        </Modal>
-      )}
+      <div className="header">
+        <Button>Кошик ({cartItems.length})</Button>
+        <Button>Обране ({favorites.length})</Button>
+      </div>
+      
+      <div className="product-list">
+        {products.map(product => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onAddToCart={handleAddToCart}
+            onToggleFavorite={handleToggleFavorite}
+            isFavorite={favorites.includes(product.id)}
+            isInCart={cartItems.includes(product)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
